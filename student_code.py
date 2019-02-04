@@ -116,6 +116,30 @@ class KnowledgeBase(object):
             print("Invalid ask:", fact.statement)
             return []
 
+    def kb_remove(self, fact_or_rule):
+        if isinstance(fact_or_rule, Fact):
+            self.facts.remove(fact_or_rule)
+            for f in fact_or_rule.supports_facts:
+                f.supported_by.remove(fact_or_rule)
+                if len(f.supported_by) == 0 and f.asserted == False:
+                    self.kb_remove(f)
+            for r in fact_or_rule.supports_rules:
+                r.supported_by.remove(fact_or_rule)
+                if len(r.supported_by) == 0 and r.asserted == False:
+                    self.kb_remove(r)
+        else:
+            self.rules.remove(fact_or_rule)
+            for f in fact_or_rule.supports_facts:
+                f.supported_by.remove(fact_or_rule)
+                if len(f.supported_by) == 0 and f.asserted == False:
+                    self.kb_remove(f)
+            for r in fact_or_rule.supports_rules:
+                r.supported_by.remove(fact_or_rule)
+                if len(r.supported_by) == 0 and r.asserted == False:
+                    self.kb_remove(r)
+
+
+
     def kb_retract(self, fact_or_rule):
         """Retract a fact from the KB
 
@@ -130,45 +154,14 @@ class KnowledgeBase(object):
         # Student code goes here
         if isinstance(fact_or_rule, Fact):
             if fact_or_rule.asserted == True:
-                self.facts.remove(fact_or_rule)
-                for f in fact_or_rule.supports_facts:
-                    f.supported_by.remove(fact_or_rule)
-                    if len(f.supported_by) == 0:
-                        self.kb_retract(f)
-                for r in fact_or_rule.supports_rules:
-                    r.supported_by.remove(fact_or_rule)
-                    if len(r.supported_by) == 0 and r.asserted == False:
-                        self.kb_retract(r)
-        else:
-            if fact_or_rule.asserted == False and len(fact_or_rule.supported_by) == 0:
-                self.rules.remove(fact_or_rule)
-                for f in fact_or_rule.supports_facts:
-                    f.supported_by.remove(fact_or_rule)
-                    if len(f.supported_by) == 0:
-                        self.kb_retract(f)
-                for r in fact_or_rule.supports_rules:
-                    r.supported_by.remove(fact_or_rule)
-                    if len(r.supported_by) == 0 and r.asserted == False:
-                        self.kb_retract(r)
+                if len(fact_or_rule.supported_by) == 0: #asserted but unsupported
+                    self.kb_remove(fact_or_rule)
+                else:
+                    fact_or_rule.asserted = False #asserted and supported
+            else:
+                if len(fact_or_rule.supported_by) == 0: #unasserted and unsupported
+                    self.kb_remove(fact_or_rule)
 
-        #fact length = 0 and asserted -> remove
-        #fact unasserted => removed
-        #rule not asserted and length = 0 => remove
-
-
-
-        #remove: fact asserted but not supported => do not remove
-        #retract: fact asserted but not supported => remove
-        #asserted rules do not remove
-        #asserted facts do not remove
-
-        """
-        When you remove a fact, you also need to remove all facts and rules that
-        were inferred using this fact. However, a given fact/rule might be supported
-        by multiple facts - so, you'll need to check whether the facts/rules
-        inferred from this fact are also supported by other facts (or if t
-        hey were directly asserted).
-        """
 
 
 class InferenceEngine(object):
