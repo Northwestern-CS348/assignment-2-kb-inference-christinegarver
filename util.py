@@ -1,8 +1,8 @@
 import logical_classes as lc
 
 def is_var(var):
-    """Check whether an element is a variable (either instance of Variable, 
-        instance of Term (where .term is a Variable) or a string starting with 
+    """Check whether an element is a variable (either instance of Variable,
+        instance of Term (where .term is a Variable) or a string starting with
         `'?'`, e.g. `'?d'`)
 
     Args:

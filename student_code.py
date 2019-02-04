@@ -128,7 +128,48 @@ class KnowledgeBase(object):
         printv("Retracting {!r}", 0, verbose, [fact_or_rule])
         ####################################################
         # Student code goes here
-        
+        if isinstance(fact_or_rule, Fact):
+            if fact_or_rule.asserted == True:
+                self.facts.remove(fact_or_rule)
+                for f in fact_or_rule.supports_facts:
+                    f.supported_by.remove(fact_or_rule)
+                    if len(f.supported_by) == 0:
+                        self.kb_retract(f)
+                for r in fact_or_rule.supports_rules:
+                    r.supported_by.remove(fact_or_rule)
+                    if len(r.supported_by) == 0 and r.asserted == False:
+                        self.kb_retract(r)
+        else:
+            if fact_or_rule.asserted == False and len(fact_or_rule.supported_by) == 0:
+                self.rules.remove(fact_or_rule)
+                for f in fact_or_rule.supports_facts:
+                    f.supported_by.remove(fact_or_rule)
+                    if len(f.supported_by) == 0:
+                        self.kb_retract(f)
+                for r in fact_or_rule.supports_rules:
+                    r.supported_by.remove(fact_or_rule)
+                    if len(r.supported_by) == 0 and r.asserted == False:
+                        self.kb_retract(r)
+
+        #fact length = 0 and asserted -> remove
+        #fact unasserted => removed
+        #rule not asserted and length = 0 => remove
+
+
+
+        #remove: fact asserted but not supported => do not remove
+        #retract: fact asserted but not supported => remove
+        #asserted rules do not remove
+        #asserted facts do not remove
+
+        """
+        When you remove a fact, you also need to remove all facts and rules that
+        were inferred using this fact. However, a given fact/rule might be supported
+        by multiple facts - so, you'll need to check whether the facts/rules
+        inferred from this fact are also supported by other facts (or if t
+        hey were directly asserted).
+        """
+
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
@@ -140,9 +181,28 @@ class InferenceEngine(object):
             kb (KnowledgeBase) - A KnowledgeBase
 
         Returns:
-            Nothing            
+            Nothing
         """
         printv('Attempting to infer from {!r} and {!r} => {!r}', 1, verbose,
             [fact.statement, rule.lhs, rule.rhs])
         ####################################################
         # Student code goes here
+
+        if match(rule.lhs[0], fact.statement):
+            bind = match(rule.lhs[0], fact.statement)
+
+            new_statement = instantiate(rule.rhs, bind)
+
+            if (len(rule.lhs) == 1):
+                new_fact = Fact(new_statement,[[fact, rule]])
+                fact.supports_facts.append(new_fact)
+                rule.supports_facts.append(new_fact)
+                kb.kb_add(new_fact)
+            else:
+                new_lhs = []
+                for r in rule.lhs[1:]:
+                    new_lhs.append(instantiate(r, bind))
+                new_rule = Rule([new_lhs, new_statement], [[fact, rule]])
+                rule.supports_rules.append(new_rule)
+                fact.supports_rules.append(new_rule)
+                kb.kb_add(new_rule)
