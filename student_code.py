@@ -118,27 +118,26 @@ class KnowledgeBase(object):
 
     def kb_remove(self, fact_or_rule):
         if isinstance(fact_or_rule, Fact):
-            ff = self._get_fact(fact_or_rule)
+            for f in fact_or_rule.supports_facts:
+                f.supported_by.remove(fact_or_rule)
+                if len(f.supported_by) == 0 and f.asserted == False:
+                    self.kb_remove(f)
+            for r in fact_or_rule.supports_rules:
+                r.supported_by.remove(fact_or_rule)
+                if len(r.supported_by) == 0 and r.asserted == False:
+                    self.kb_remove(r)
             self.facts.remove(fact_or_rule)
-            for f in ff.supports_facts:
-                f.supported_by.remove(ff)
-                if len(f.supported_by) == 0 and f.asserted == False:
-                    self.kb_remove(f)
-            for r in ff.supports_rules:
-                r.supported_by.remove(ff)
-                if len(r.supported_by) == 0 and r.asserted == False:
-                    self.kb_remove(r)
         else:
-            rr = self._get_rule(fact_or_rule)
-            self.rules.remove(fact_or_rule)
-            for f in rr.supports_facts:
-                f.supported_by.remove(rr)
-                if len(f.supported_by) == 0 and f.asserted == False:
-                    self.kb_remove(f)
-            for r in rr.supports_rules:
-                r.supported_by.remove(rr)
-                if len(r.supported_by) == 0 and r.asserted == False:
-                    self.kb_remove(r)
+            if fact_or_rule.asserted == False:
+                for f in fact_or_rule.supports_facts:
+                    f.supported_by.remove(fact_or_rule)
+                    if len(f.supported_by) == 0 and f.asserted == False:
+                        self.kb_remove(f)
+                for r in fact_or_rule.supports_rules:
+                    r.supported_by.remove(fact_or_rule)
+                    if len(r.supported_by) == 0 and r.asserted == False:
+                        self.kb_remove(r)
+                self.rules.remove(fact_or_rule)
 
 
 
@@ -156,10 +155,7 @@ class KnowledgeBase(object):
         # Student code goes here
         if isinstance(fact_or_rule, Fact):
             if fact_or_rule.asserted == True:
-                if len(fact_or_rule.supported_by) == 0: #asserted but unsupported
-                    self.kb_remove(fact_or_rule)
-                else:
-                    fact_or_rule.asserted = False #asserted and supported
+                fact_or_rule.asserted = False #asserted
             else:
                 if len(fact_or_rule.supported_by) == 0: #unasserted and unsupported
                     self.kb_remove(fact_or_rule)
